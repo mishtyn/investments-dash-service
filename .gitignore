@@ -36,6 +36,7 @@ Pipfile.lock
 # Environment
 .env
 .env.local
+.env.production
 
 # Database
 *.db
@@ -54,6 +55,12 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
+
+# Nginx
+nginx/logs/*.log
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
 
 # Testing
 .pytest_cache/

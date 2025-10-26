@@ -60,5 +60,34 @@ dev: setup build up migrate ## Setup and start development environment
 	@echo "🚀 Development environment is ready!"
 	@echo "📚 API docs: http://localhost:8000/docs"
 
+# Production commands
+prod-build: ## Build production Docker images
+	docker-compose -f docker-compose.production.yml build
+
+prod-up: ## Start production services
+	docker-compose -f docker-compose.production.yml up -d
+
+prod-down: ## Stop production services
+	docker-compose -f docker-compose.production.yml down
+
+prod-logs: ## Show production logs
+	docker-compose -f docker-compose.production.yml logs -f
+
+prod-restart: ## Restart production services
+	docker-compose -f docker-compose.production.yml restart
+
+prod-ps: ## Show production services status
+	docker-compose -f docker-compose.production.yml ps
+
+prod-migrate: ## Run migrations in production
+	docker-compose -f docker-compose.production.yml exec backend alembic upgrade head
+
+prod-deploy: ## Deploy to production (use deploy.sh)
+	@chmod +x deploy.sh
+	@./deploy.sh
+
+prod-clean: ## Clean production containers and volumes
+	docker-compose -f docker-compose.production.yml down -v
+
 .DEFAULT_GOAL := help
 

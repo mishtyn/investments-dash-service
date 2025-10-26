@@ -414,6 +414,185 @@ class Settings(BaseSettings):
 - [Pydantic V2 документация](https://docs.pydantic.dev/latest/)
 - [PostgreSQL документация](https://www.postgresql.org/docs/)
 
+## 🚀 Production Deployment
+
+Для развертывания приложения на production сервере используйте специальный `docker-compose.production.yml`.
+
+### Быстрый старт (Production)
+
+1. **Создайте `.env.production` файл:**
+```bash
+# Скопируйте пример и отредактируйте
+cp .env.production.example .env.production
+nano .env.production
+```
+
+Обязательно измените:
+- `POSTGRES_PASSWORD` - надежный пароль для базы данных
+- `SECRET_KEY` - длинный случайный ключ (минимум 32 символа)
+- `TELEGRAM_BOT_TOKEN` - токен вашего бота
+- `FRONTEND_URL` - URL вашего домена (https://your-domain.com)
+- `NEXT_PUBLIC_API_URL` - API URL (https://your-domain.com/api)
+
+2. **Деплой приложения:**
+```bash
+# Автоматический деплой (рекомендуется)
+make prod-deploy
+
+# Или вручную
+docker-compose -f docker-compose.production.yml build
+docker-compose -f docker-compose.production.yml up -d
+```
+
+3. **Проверьте статус:**
+```bash
+make prod-ps
+# или
+docker-compose -f docker-compose.production.yml ps
+```
+
+### Настройка SSL сертификата (HTTPS)
+
+Для включения HTTPS используйте скрипт настройки SSL:
+
+```bash
+sudo ./setup-ssl.sh
+```
+
+Скрипт автоматически:
+- Установит certbot (если не установлен)
+- Получит SSL сертификат от Let's Encrypt
+- Настроит автоматическое обновление сертификата
+- Скопирует сертификаты в нужную директорию
+
+После получения сертификата:
+1. Отредактируйте `nginx/conf.d/default.conf`
+2. Раскомментируйте блок HTTPS server
+3. Замените `your-domain.com` на ваш домен
+4. Перезапустите nginx: `make prod-restart`
+
+### Production команды (Makefile)
+
+```bash
+make prod-build      # Собрать production образы
+make prod-up         # Запустить production сервисы
+make prod-down       # Остановить production сервисы
+make prod-logs       # Показать логи
+make prod-restart    # Перезапустить сервисы
+make prod-ps         # Показать статус сервисов
+make prod-migrate    # Применить миграции БД
+make prod-deploy     # Полный деплой (pull, build, restart)
+make prod-clean      # Очистить контейнеры и volumes
+```
+
+### Архитектура Production
+
+Production окружение включает:
+
+- **Backend** (FastAPI) - API сервер на порту 8000 (внутренний)
+- **Frontend** (Next.js) - веб-интерфейс на порту 3000 (внутренний)
+- **PostgreSQL** - база данных (не доступна извне)
+- **Telegram Bot** - бот для авторизации
+- **Nginx** - reverse proxy на портах 80/443 (публичный)
+
+### Безопасность Production
+
+Production конфигурация включает:
+- ✅ Отдельная production база данных
+- ✅ Все сервисы в изолированной Docker сети
+- ✅ База данных недоступна извне
+- ✅ Nginx как reverse proxy с rate limiting
+- ✅ Security headers (HSTS, X-Frame-Options, etc.)
+- ✅ Автоматические health checks
+- ✅ Non-root контейнеры для безопасности
+- ✅ Оптимизированные production Docker образы
+- ✅ Standalone Next.js build
+- ✅ Multi-worker uvicorn (4 workers)
+
+### Мониторинг
+
+Просмотр логов:
+```bash
+# Все сервисы
+make prod-logs
+
+# Конкретный сервис
+docker-compose -f docker-compose.production.yml logs -f backend
+docker-compose -f docker-compose.production.yml logs -f frontend
+docker-compose -f docker-compose.production.yml logs -f nginx
+```
+
+Health checks:
+```bash
+# Backend API
+curl http://your-domain.com/api/health
+
+# Frontend
+curl http://your-domain.com
+```
+
+### Обновление Production
+
+Для обновления приложения на production:
+
+```bash
+# Автоматическое обновление
+make prod-deploy
+
+# Или вручную:
+git pull origin master
+docker-compose -f docker-compose.production.yml build
+docker-compose -f docker-compose.production.yml up -d
+```
+
+### Backup базы данных
+
+Создание backup:
+```bash
+docker-compose -f docker-compose.production.yml exec db \
+  pg_dump -U postgres investments_dash > backup_$(date +%Y%m%d_%H%M%S).sql
+```
+
+Восстановление из backup:
+```bash
+cat backup_YYYYMMDD_HHMMSS.sql | \
+  docker-compose -f docker-compose.production.yml exec -T db \
+  psql -U postgres investments_dash
+```
+
+### Troubleshooting Production
+
+**Проблемы с контейнерами:**
+```bash
+# Проверить статус
+docker-compose -f docker-compose.production.yml ps
+
+# Проверить логи
+docker-compose -f docker-compose.production.yml logs --tail=100
+
+# Перезапустить все
+docker-compose -f docker-compose.production.yml restart
+```
+
+**Проблемы с базой данных:**
+```bash
+# Проверить подключение к БД
+docker-compose -f docker-compose.production.yml exec db \
+  psql -U postgres -d investments_dash -c "SELECT 1;"
+
+# Применить миграции
+make prod-migrate
+```
+
+**Nginx не запускается:**
+```bash
+# Проверить конфигурацию
+docker-compose -f docker-compose.production.yml exec nginx nginx -t
+
+# Посмотреть логи
+docker-compose -f docker-compose.production.yml logs nginx
+```
+
 ## Лицензия
 
 MIT
