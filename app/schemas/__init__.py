@@ -4,11 +4,19 @@ from app.schemas.investment import (
     InvestmentUpdate,
     InvestmentResponse
 )
+from app.schemas.auth import (
+    TelegramAuthData,
+    UserResponse,
+    AuthResponse
+)
 
 __all__ = [
     "InvestmentBase",
     "InvestmentCreate",
     "InvestmentUpdate",
-    "InvestmentResponse"
+    "InvestmentResponse",
+    "TelegramAuthData",
+    "UserResponse",
+    "AuthResponse"
 ]
 

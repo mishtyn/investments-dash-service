@@ -1,21 +1,88 @@
-# Investments Dashboard Service
+# Investment Tracker
 
-Сервис для управления инвестиционным портфелем, построенный на FastAPI с использованием PostgreSQL.
+A modern, full-stack investment tracking web application with Telegram authentication. Built with FastAPI (backend) and Next.js (frontend).
 
-> **🆕 Впервые здесь?** Начните с [START_HERE.md](START_HERE.md) или [FIRST_RUN.md](FIRST_RUN.md)
+![Investment Tracker](https://img.shields.io/badge/Status-Production%20Ready-green)
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
 
-## 🚀 Быстрый старт
+## ✨ Features
+
+- 🔐 **Telegram Bot Authentication** - Simple one-click login via Telegram bot (just /start!)
+- 🤖 **Magic Link Login** - Instant access through secure bot-generated links
+- 📊 **Interactive Dashboard** - Real-time portfolio overview with beautiful charts
+- 💼 **Investment Management** - Full CRUD operations for investments
+- 🎯 **Multiple Asset Types** - Stocks, Crypto, Shares, Gold, Real Estate, Bonds, and more
+- 📈 **Advanced Analytics** - Earnings analysis with customizable time aggregations
+- 🔍 **Smart Filtering** - Filter by type, date range, and search functionality
+- 🎨 **Modern UI** - Beautiful, professional interface inspired by Budget Ok
+- 📱 **Responsive Design** - Works seamlessly on desktop and mobile
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Docker Desktop
+- Node.js 18+ (for frontend development)
+
+### 1. Clone and Setup
 
 ```bash
-# С помощью Makefile (Mac/Linux)
-make setup && make dev
+git clone <repository-url>
+cd investments-dash-service
 
-# Или вручную
-chmod +x setup.sh && ./setup.sh
+# Copy environment file
+cp .env.example .env
+```
+
+### 2. Start Backend
+
+```bash
 docker-compose up --build -d
 ```
 
-**📖 Документация**: [START_HERE.md](START_HERE.md) | [QUICKSTART.md](QUICKSTART.md) | [SETUP_GUIDE.md](SETUP_GUIDE.md) | [ARCHITECTURE.md](ARCHITECTURE.md)
+Backend will be available at:
+- API: http://localhost:8000
+- Swagger Docs: http://localhost:8000/docs
+
+### 3. Start Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend will be available at: http://localhost:3000
+
+### 4. Setup Telegram Bot (Optional but Recommended)
+
+For the best login experience, set up the Telegram bot:
+
+1. Create a bot with @BotFather on Telegram
+2. Add your bot token to `.env`:
+   ```bash
+   TELEGRAM_BOT_TOKEN=your-bot-token-here
+   ```
+3. Run the bot:
+   ```bash
+   # Locally
+   pipenv run python -m app.bot
+   
+   # Or with Docker (uncomment bot service in docker-compose.yml)
+   docker-compose up -d bot
+   ```
+
+**📖 Full Bot Setup Guide**: [BOT_SETUP.md](BOT_SETUP.md)
+
+### 5. Access the Application
+
+Open http://localhost:3000 and:
+- Open your Telegram bot and click `/start` to get a magic login link 🚀
+- OR use the demo account for testing
+
+**📖 Full Documentation**: [SETUP_GUIDE.md](SETUP_GUIDE.md)
 
 ## Технологический стек
 

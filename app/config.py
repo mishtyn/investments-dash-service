@@ -18,6 +18,14 @@ class Settings(BaseSettings):
     host: str = Field(default="0.0.0.0", alias="HOST")
     port: int = Field(default=8000, alias="PORT")
     
+    # Authentication
+    secret_key: str = Field(
+        default="your-secret-key-change-this-in-production",
+        alias="SECRET_KEY"
+    )
+    telegram_bot_token: str = Field(default="", alias="TELEGRAM_BOT_TOKEN")
+    frontend_url: str = Field(default="http://127.0.0.1:3000", alias="FRONTEND_URL")
+    
     class Config:
         env_file = ".env"
         case_sensitive = False

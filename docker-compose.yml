@@ -10,8 +10,8 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-    # ports:
-    #   - "5433:5432"
+    ports:
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -20,21 +20,34 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
-    build: .
-    container_name: investments_dash_app
-    env_file:
-      - .env
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-    depends_on:
-      db:
-        condition: service_healthy
-    command: >
-      sh -c "alembic upgrade head &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+  # app:
+  #   build: .
+  #   container_name: investments_dash_app
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - .:/app
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   command: 
+  #     sh -c "alembic upgrade head &&
+  #            uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # Telegram Bot (optional - uncomment to enable)
+  # bot:
+  #   build: .
+  #   container_name: investments_dash_bot
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - .:/app
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   command: python -m app.bot
 
 volumes:
   postgres_data:

@@ -50,6 +50,12 @@ clean: ## Remove all containers, volumes and images
 	docker-compose down -v
 	docker-compose rm -f
 
+local-bot: ## Start Telegram bot
+	python -m app.bot
+
+local-app: ## Start FastAPI application
+	uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
 dev: setup build up migrate ## Setup and start development environment
 	@echo "🚀 Development environment is ready!"
 	@echo "📚 API docs: http://localhost:8000/docs"
