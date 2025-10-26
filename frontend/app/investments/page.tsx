@@ -10,12 +10,14 @@ import {
   Calendar,
   TrendingUp,
   TrendingDown,
+  TrendingDown as SellIcon,
 } from 'lucide-react';
 import { investmentsApi } from '@/lib/api';
 import { isAuthenticated, getUser } from '@/lib/auth';
 import type { Investment, InvestmentType, InvestmentCreate, InvestmentUpdate } from '@/lib/types';
 import toast from 'react-hot-toast';
 import InvestmentForm from '@/components/InvestmentForm';
+import InvestmentSellForm from '@/components/InvestmentSellForm';
 
 const INVESTMENT_TYPE_LABELS = {
   stocks: 'Stocks',
@@ -44,6 +46,7 @@ export default function InvestmentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<InvestmentType | 'all'>('all');
   const [showForm, setShowForm] = useState(false);
+  const [showSellForm, setShowSellForm] = useState(false);
   const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
 
   useEffect(() => {
@@ -133,6 +136,11 @@ export default function InvestmentsPage() {
     setEditingInvestment(null);
   };
 
+  const handleSellSuccess = () => {
+    setShowSellForm(false);
+    fetchInvestments();
+  };
+
   const filteredInvestments = investments.filter(
     (inv) =>
       inv.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -165,13 +173,22 @@ export default function InvestmentsPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Investments</h1>
           <p className="text-gray-600">Add, edit, or remove your investments</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg"
-        >
-          <Plus size={20} />
-          <span className="font-medium">Add Investment</span>
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={() => setShowSellForm(true)}
+            className="flex items-center space-x-2 bg-gradient-to-r from-red-500 to-orange-600 text-white px-6 py-3 rounded-lg hover:from-red-600 hover:to-orange-700 transition-all duration-200 shadow-lg"
+          >
+            <SellIcon size={20} />
+            <span className="font-medium">Sell</span>
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg"
+          >
+            <Plus size={20} />
+            <span className="font-medium">Buy</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -259,7 +276,10 @@ export default function InvestmentsPage() {
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                       <div>
                         <span className="text-gray-500 block">Amount</span>
-                        <span className="font-semibold text-gray-900">{investment.amount}</span>
+                        <span className={`font-semibold ${investment.amount < 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                          {investment.amount < 0 && '-'}{Math.abs(investment.amount)}
+                          {investment.amount < 0 && ' (Sold)'}
+                        </span>
                       </div>
                       <div>
                         <span className="text-gray-500 block">Purchase Price</span>
@@ -330,6 +350,18 @@ export default function InvestmentsPage() {
           onSubmit={editingInvestment ? handleUpdate : handleCreate}
           onClose={handleCloseForm}
         />
+      )}
+
+      {/* Investment Sell Form Modal */}
+      {showSellForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <InvestmentSellForm
+              onSuccess={handleSellSuccess}
+              onCancel={() => setShowSellForm(false)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

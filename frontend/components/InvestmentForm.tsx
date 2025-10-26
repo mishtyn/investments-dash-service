@@ -75,6 +75,22 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
     }
   };
 
+  // Helper function to get input classes based on filled state
+  const getInputClasses = (value: string, isRequired: boolean = false) => {
+    const baseClasses = "w-full px-4 py-3 border rounded-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent";
+    
+    if (value && value.trim() !== '') {
+      // Filled state - green tint with black text
+      return `${baseClasses} bg-green-50 border-green-300 text-gray-900 font-medium`;
+    } else if (isRequired) {
+      // Empty required field - lighter text
+      return `${baseClasses} bg-white border-gray-300 hover:border-gray-400 text-gray-500`;
+    } else {
+      // Optional empty field - lighter text
+      return `${baseClasses} bg-white border-gray-300 hover:border-gray-400 text-gray-500`;
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -103,7 +119,7 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
               value={formData.investment_type}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={getInputClasses(formData.investment_type, true)}
             >
               <option value="stocks">Stocks</option>
               <option value="crypto">Crypto</option>
@@ -128,7 +144,7 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
                 onChange={handleChange}
                 required
                 placeholder="e.g., Apple Inc."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getInputClasses(formData.name, true)}
               />
             </div>
 
@@ -143,7 +159,7 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
                 onChange={handleChange}
                 required
                 placeholder="e.g., AAPL"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getInputClasses(formData.symbol, true)}
               />
             </div>
           </div>
@@ -163,7 +179,7 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
                 step="0.0001"
                 min="0"
                 placeholder="e.g., 10"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getInputClasses(formData.amount, true)}
               />
             </div>
 
@@ -180,7 +196,7 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
                 step="0.01"
                 min="0"
                 placeholder="e.g., 150.00"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getInputClasses(formData.purchase_price, true)}
               />
             </div>
           </div>
@@ -199,7 +215,7 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
                 step="0.01"
                 min="0"
                 placeholder="e.g., 175.50"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getInputClasses(formData.current_price, false)}
               />
               <p className="mt-1 text-xs text-gray-500">
                 Leave empty to use purchase price
@@ -216,7 +232,7 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
                 value={formData.purchase_date}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={getInputClasses(formData.purchase_date, true)}
               />
             </div>
           </div>
@@ -232,7 +248,7 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
               onChange={handleChange}
               rows={3}
               placeholder="Add any notes or details about this investment..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className={`${getInputClasses(formData.description, false)} resize-none`}
             />
             <p className="mt-1 text-xs text-gray-500">
               Maximum 1000 characters
