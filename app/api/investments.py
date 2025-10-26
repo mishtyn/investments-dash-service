@@ -258,6 +258,7 @@ def get_earnings_analysis(
         cumulative_invested = 0
         cumulative_current_value = 0
         cumulative_count = 0
+        total_amount = 0  # Total quantity of all investments
         
         for symbol, pos in positions.items():
             net_amount = pos["net_amount"]
@@ -273,6 +274,7 @@ def get_earnings_analysis(
                 cumulative_invested += position_invested
                 cumulative_current_value += position_current_value
                 cumulative_count += 1
+                total_amount += net_amount  # Add net amount to total
         
         profit_loss = cumulative_current_value - cumulative_invested
         
@@ -281,7 +283,8 @@ def get_earnings_analysis(
             "invested": round(cumulative_invested, 2),
             "current_value": round(cumulative_current_value, 2),
             "profit_loss": round(profit_loss, 2),
-            "count": cumulative_count
+            "count": cumulative_count,
+            "total_amount": round(total_amount, 6)  # Total quantity with precision
         })
     
     return result

@@ -295,27 +295,39 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Earnings Analysis Chart */}
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Earnings Analysis</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Portfolio Analysis</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={earnings}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
-              <YAxis />
+              <YAxis yAxisId="left" />
+              <YAxis yAxisId="right" orientation="right" />
               <Tooltip />
               <Legend />
               <Line
+                yAxisId="left"
                 type="monotone"
                 dataKey="invested"
                 stroke="#3B82F6"
                 strokeWidth={2}
-                name="Invested"
+                name="Invested ($)"
               />
               <Line
+                yAxisId="left"
                 type="monotone"
                 dataKey="current_value"
                 stroke="#10B981"
                 strokeWidth={2}
-                name="Current Value"
+                name="Current Value ($)"
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="total_amount"
+                stroke="#F59E0B"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                name="Total Quantity"
               />
             </LineChart>
           </ResponsiveContainer>
