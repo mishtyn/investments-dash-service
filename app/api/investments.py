@@ -100,60 +100,90 @@ def get_earnings_analysis(
     aggregate_by: str = Query("month", regex="^(day|week|month|year)$"),
     db: Session = Depends(get_db)
 ):
-    """Get earnings analysis with time-based aggregation."""
+    """Get cumulative earnings analysis with time-based aggregation.
+    
+    Shows the total accumulated sum of all investments up to each time period.
+    Each point on the graph represents the sum of ALL investments purchased 
+    from the beginning up to that period.
+    """
+    # Build base query with filters
     query = db.query(Investment)
     
     if user_id:
         query = query.filter(Investment.user_id == user_id)
     if investment_type:
         query = query.filter(Investment.investment_type == investment_type)
-    if start_date:
-        query = query.filter(Investment.purchase_date >= start_date)
-    if end_date:
-        query = query.filter(Investment.purchase_date <= end_date)
     
+    # Get all investments sorted by purchase date
     investments = query.order_by(Investment.purchase_date).all()
     
-    # Aggregate by time period
-    aggregated = {}
+    if not investments:
+        return []
     
-    for inv in investments:
+    # Helper function to get period key
+    def get_period_key(purchase_date, aggregate_by):
         if aggregate_by == "day":
-            key = inv.purchase_date.isoformat()
+            return purchase_date.isoformat()
         elif aggregate_by == "week":
-            # Get year and week number
-            year, week, _ = inv.purchase_date.isocalendar()
-            key = f"{year}-W{week:02d}"
+            year, week, _ = purchase_date.isocalendar()
+            return f"{year}-W{week:02d}"
         elif aggregate_by == "month":
-            key = inv.purchase_date.strftime("%Y-%m")
+            return purchase_date.strftime("%Y-%m")
         else:  # year
-            key = str(inv.purchase_date.year)
-        
-        if key not in aggregated:
-            aggregated[key] = {
-                "date": key,
-                "invested": 0,
-                "current_value": 0,
-                "profit_loss": 0,
-                "count": 0
-            }
-        
-        invested = inv.purchase_price * inv.amount
-        current = (inv.current_price or inv.purchase_price) * inv.amount
-        
-        aggregated[key]["invested"] += invested
-        aggregated[key]["current_value"] += current
-        aggregated[key]["profit_loss"] += current - invested
-        aggregated[key]["count"] += 1
+            return str(purchase_date.year)
     
-    # Convert to list and sort
-    result = sorted(aggregated.values(), key=lambda x: x["date"])
+    # First, group investments by their purchase period for efficient processing
+    investments_by_period = {}
+    for inv in investments:
+        key = get_period_key(inv.purchase_date, aggregate_by)
+        if key not in investments_by_period:
+            investments_by_period[key] = []
+        investments_by_period[key].append(inv)
     
-    # Round values
-    for item in result:
-        item["invested"] = round(item["invested"], 2)
-        item["current_value"] = round(item["current_value"], 2)
-        item["profit_loss"] = round(item["profit_loss"], 2)
+    # Sort period keys
+    sorted_periods = sorted(investments_by_period.keys())
+    
+    # Apply date range filter to display periods if specified
+    if start_date:
+        start_key = get_period_key(start_date, aggregate_by)
+        sorted_periods = [p for p in sorted_periods if p >= start_key]
+    if end_date:
+        end_key = get_period_key(end_date, aggregate_by)
+        sorted_periods = [p for p in sorted_periods if p <= end_key]
+    
+    # Build cumulative result
+    result = []
+    cumulative_invested = 0
+    cumulative_current_value = 0
+    cumulative_count = 0
+    
+    # Include all investments purchased before start_date in the initial cumulative values
+    if start_date and sorted_periods:
+        for period_key in sorted(investments_by_period.keys()):
+            if period_key < sorted_periods[0]:
+                for inv in investments_by_period[period_key]:
+                    cumulative_invested += inv.purchase_price * inv.amount
+                    cumulative_current_value += (inv.current_price or inv.purchase_price) * inv.amount
+                    cumulative_count += 1
+    
+    # Build cumulative data for each period
+    for period_key in sorted_periods:
+        # Add investments from this period to cumulative totals
+        if period_key in investments_by_period:
+            for inv in investments_by_period[period_key]:
+                cumulative_invested += inv.purchase_price * inv.amount
+                cumulative_current_value += (inv.current_price or inv.purchase_price) * inv.amount
+                cumulative_count += 1
+        
+        profit_loss = cumulative_current_value - cumulative_invested
+        
+        result.append({
+            "date": period_key,
+            "invested": round(cumulative_invested, 2),
+            "current_value": round(cumulative_current_value, 2),
+            "profit_loss": round(profit_loss, 2),
+            "count": cumulative_count
+        })
     
     return result
 
