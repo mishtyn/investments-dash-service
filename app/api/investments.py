@@ -51,57 +51,79 @@ def get_portfolio_overview(
 ):
     """Get portfolio overview with summary statistics.
     
-    Calculates portfolio value using net positions (buys - sells).
-    Shows current holdings and their performance.
+    Calculates both unrealized profit (current holdings) and realized profit (from sales).
+    Shows comprehensive portfolio performance including completed transactions.
     """
-    # Use optimized SQL query with grouping by symbol
-    query = (
-        db.query(
-            Investment.symbol,
-            Investment.investment_type,
-            func.sum(Investment.amount).label("net_amount"),
-            func.sum(
-                case(
-                    (Investment.amount > 0, Investment.amount * Investment.purchase_price),
-                    else_=0
-                )
-            ).label("total_bought_value"),
-            func.max(Investment.current_price).label("current_price"),
-        )
-        .group_by(Investment.symbol, Investment.investment_type)
-    )
-
+    # Build base query with filters
+    query = db.query(Investment)
+    
     if user_id:
         query = query.filter(Investment.user_id == user_id)
     if investment_type:
         query = query.filter(Investment.investment_type == investment_type)
     
-    positions = query.all()
+    investments = query.all()
+    
+    # Group by symbol to calculate positions and realized P/L
+    positions = {}
+    
+    for inv in investments:
+        if inv.symbol not in positions:
+            positions[inv.symbol] = {
+                "investment_type": inv.investment_type,
+                "bought_amount": 0,
+                "sold_amount": 0,
+                "total_bought_value": 0,
+                "total_sold_value": 0,
+                "current_price": inv.current_price
+            }
+        
+        if inv.amount > 0:  # Buy transaction
+            positions[inv.symbol]["bought_amount"] += inv.amount
+            positions[inv.symbol]["total_bought_value"] += inv.amount * inv.purchase_price
+        else:  # Sell transaction (negative amount)
+            positions[inv.symbol]["sold_amount"] += abs(inv.amount)
+            positions[inv.symbol]["total_sold_value"] += abs(inv.amount) * inv.purchase_price
+        
+        # Update current price if available
+        if inv.current_price:
+            positions[inv.symbol]["current_price"] = inv.current_price
     
     # Calculate totals
     total_invested = 0
     total_current_value = 0
+    unrealized_profit_loss = 0
+    realized_profit_loss = 0
     active_positions = 0
     by_type = {}
     
-    for pos in positions:
-        net_amount = pos.net_amount
+    for symbol, pos in positions.items():
+        bought_amount = pos["bought_amount"]
+        sold_amount = pos["sold_amount"]
+        net_amount = bought_amount - sold_amount
         
-        # Only count positions that still exist (net_amount > 0)
+        # Calculate average purchase price
+        avg_purchase_price = pos["total_bought_value"] / bought_amount if bought_amount > 0 else 0
+        
+        # Calculate realized P/L from sales
+        if sold_amount > 0:
+            cost_of_sold = avg_purchase_price * sold_amount
+            realized_profit_loss += pos["total_sold_value"] - cost_of_sold
+        
+        # Calculate unrealized P/L for remaining position
         if net_amount > 0:
-            # Calculate proportional invested amount for remaining position
-            avg_purchase_price = pos.total_bought_value / net_amount if net_amount > 0 else 0
-            position_invested = avg_purchase_price * net_amount
-            
-            current_price = pos.current_price or avg_purchase_price
+            position_cost = avg_purchase_price * net_amount
+            current_price = pos["current_price"] or avg_purchase_price
             position_current_value = current_price * net_amount
+            position_unrealized_pl = position_current_value - position_cost
             
-            total_invested += position_invested
+            total_invested += position_cost
             total_current_value += position_current_value
+            unrealized_profit_loss += position_unrealized_pl
             active_positions += 1
             
             # Group by type
-            type_key = pos.investment_type.value
+            type_key = pos["investment_type"].value
             if type_key not in by_type:
                 by_type[type_key] = {
                     "count": 0,
@@ -111,17 +133,19 @@ def get_portfolio_overview(
                 }
             
             by_type[type_key]["count"] += 1
-            by_type[type_key]["invested"] += position_invested
+            by_type[type_key]["invested"] += position_cost
             by_type[type_key]["current_value"] += position_current_value
-            by_type[type_key]["profit_loss"] += position_current_value - position_invested
+            by_type[type_key]["profit_loss"] += position_unrealized_pl
     
-    total_profit_loss = total_current_value - total_invested
+    total_profit_loss = unrealized_profit_loss + realized_profit_loss
     profit_loss_percentage = (total_profit_loss / total_invested * 100) if total_invested > 0 else 0
     
     return {
         "total_investments": active_positions,
         "total_invested": round(total_invested, 2),
         "total_current_value": round(total_current_value, 2),
+        "unrealized_profit_loss": round(unrealized_profit_loss, 2),
+        "realized_profit_loss": round(realized_profit_loss, 2),
         "total_profit_loss": round(total_profit_loss, 2),
         "profit_loss_percentage": round(profit_loss_percentage, 2),
         "by_type": by_type

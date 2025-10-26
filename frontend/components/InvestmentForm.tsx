@@ -29,7 +29,7 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
         name: investment.name,
         symbol: investment.symbol,
         investment_type: investment.investment_type,
-        amount: investment.amount.toString(),
+        amount: Math.abs(investment.amount).toString(), // Always show positive amount
         purchase_price: investment.purchase_price.toString(),
         current_price: investment.current_price?.toString() || '',
         purchase_date: investment.purchase_date,
@@ -37,6 +37,9 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
       });
     }
   }, [investment]);
+
+  // Check if this is a sell transaction (amount < 0)
+  const isSellTransaction = investment && investment.amount < 0;
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -54,12 +57,13 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
         name: formData.name,
         symbol: formData.symbol,
         investment_type: formData.investment_type,
-        amount: parseFloat(formData.amount),
+        amount: isSellTransaction ? -Math.abs(parseFloat(formData.amount)) : parseFloat(formData.amount),
         purchase_price: parseFloat(formData.purchase_price),
         purchase_date: formData.purchase_date,
       };
 
-      if (formData.current_price) {
+      // Only add current_price for buy transactions (not for sells)
+      if (!isSellTransaction && formData.current_price) {
         submitData.current_price = parseFloat(formData.current_price);
       }
 
@@ -102,9 +106,16 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
       >
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-2xl">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {investment ? 'Edit Investment' : 'Add New Investment'}
-          </h2>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {investment ? (isSellTransaction ? 'Edit Sale' : 'Edit Purchase') : 'Add New Investment'}
+            </h2>
+            {isSellTransaction && (
+              <p className="text-sm text-orange-600 mt-1">
+                Note: This is a sell transaction (cannot change to buy)
+              </p>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -191,7 +202,7 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Purchase Price (per unit) <span className="text-red-500">*</span>
+                {isSellTransaction ? 'Sale Price (per unit)' : 'Purchase Price (per unit)'} <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -201,7 +212,7 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
                 required
                 step="0.01"
                 min="0"
-                placeholder="e.g., 150.00"
+                placeholder={isSellTransaction ? "e.g., 160.00" : "e.g., 150.00"}
                 className={getInputClasses(formData.purchase_price, true)}
               />
             </div>
@@ -209,28 +220,30 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
 
           {/* Current Price and Purchase Date Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Current Price (per unit)
-              </label>
-              <input
-                type="number"
-                name="current_price"
-                value={formData.current_price}
-                onChange={handleChange}
-                step="0.01"
-                min="0"
-                placeholder="e.g., 175.50"
-                className={getInputClasses(formData.current_price, false)}
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Leave empty to use purchase price
-              </p>
-            </div>
+            {!isSellTransaction && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Current Price (per unit)
+                </label>
+                <input
+                  type="number"
+                  name="current_price"
+                  value={formData.current_price}
+                  onChange={handleChange}
+                  step="0.01"
+                  min="0"
+                  placeholder="e.g., 175.50"
+                  className={getInputClasses(formData.current_price, false)}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Leave empty to use purchase price
+                </p>
+              </div>
+            )}
 
-            <div>
+            <div className={isSellTransaction ? 'md:col-span-2' : ''}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Purchase Date <span className="text-red-500">*</span>
+                {isSellTransaction ? 'Sale Date' : 'Purchase Date'} <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -281,7 +294,12 @@ export default function InvestmentForm({ investment, onSubmit, onClose }: Invest
                   <span>Saving...</span>
                 </>
               ) : (
-                <span>{investment ? 'Update Investment' : 'Add Investment'}</span>
+                <span>
+                  {investment 
+                    ? (isSellTransaction ? 'Update Sale' : 'Update Purchase')
+                    : 'Add Investment'
+                  }
+                </span>
               )}
             </button>
           </div>

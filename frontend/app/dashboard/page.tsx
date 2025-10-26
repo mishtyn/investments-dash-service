@@ -201,7 +201,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Overview Panel */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-600">Total Invested</span>
@@ -228,7 +228,7 @@ export default function DashboardPage() {
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600">Profit/Loss</span>
+            <span className="text-sm font-medium text-gray-600">Total P/L</span>
             {(overview?.total_profit_loss || 0) >= 0 ? (
               <TrendingUp className="text-green-500" size={20} />
             ) : (
@@ -240,25 +240,53 @@ export default function DashboardPage() {
               (overview?.total_profit_loss || 0) >= 0 ? 'text-green-600' : 'text-red-600'
             }`}
           >
-            ${Math.abs(overview?.total_profit_loss || 0).toLocaleString()}
+            {(overview?.total_profit_loss || 0) >= 0 ? '+' : ''}${Math.abs(overview?.total_profit_loss || 0).toLocaleString()}
           </div>
-          <div
-            className={`text-sm ${
-              (overview?.total_profit_loss || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
-            {(overview?.total_profit_loss || 0) >= 0 ? '+' : '-'}
-            {Math.abs(overview?.profit_loss_percentage || 0).toFixed(2)}%
+          <div className="flex justify-between text-xs mt-2">
+            <span className="text-gray-600">
+              Unrealized: ${Math.abs(overview?.unrealized_profit_loss || 0).toLocaleString()}
+            </span>
+            <span className="text-gray-600">
+              Realized: ${Math.abs(overview?.realized_profit_loss || 0).toLocaleString()}
+            </span>
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600">Total Investments</span>
+            <span className="text-sm font-medium text-gray-600">Active Positions</span>
             <PieChart className="text-purple-500" size={20} />
           </div>
           <div className="text-2xl font-bold text-gray-900">
             {overview?.total_investments || 0}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            Currently held
+          </div>
+        </div>
+
+        <div
+          className={`bg-white rounded-xl shadow-sm p-6 border-l-4 ${
+            (overview?.realized_profit_loss || 0) >= 0 ? 'border-emerald-500' : 'border-orange-500'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-600">Realized P/L</span>
+            {(overview?.realized_profit_loss || 0) >= 0 ? (
+              <TrendingUp className="text-emerald-500" size={20} />
+            ) : (
+              <TrendingDown className="text-orange-500" size={20} />
+            )}
+          </div>
+          <div
+            className={`text-2xl font-bold ${
+              (overview?.realized_profit_loss || 0) >= 0 ? 'text-emerald-600' : 'text-orange-600'
+            }`}
+          >
+            {(overview?.realized_profit_loss || 0) >= 0 ? '+' : ''}${Math.abs(overview?.realized_profit_loss || 0).toLocaleString()}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            From sales
           </div>
         </div>
       </div>
