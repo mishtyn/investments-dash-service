@@ -56,6 +56,9 @@ local-bot: ## Start Telegram bot
 local-app: ## Start FastAPI application
 	uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+local-frontend: ## Start Next.js frontend
+	cd frontend && npm run dev
+
 dev: setup build up migrate ## Setup and start development environment
 	@echo "🚀 Development environment is ready!"
 	@echo "📚 API docs: http://localhost:8000/docs"
